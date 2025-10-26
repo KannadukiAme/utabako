@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-svelte';
+
+@import './style/utabako.css';
+
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));

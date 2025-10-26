@@ -1,0 +1,288 @@
+{
+	"log": {
+		"level": "info",
+		"timestamp": true
+	},
+	"experimental": {
+		"clash_api": {
+			"external_controller": "0.0.0.0:9090",
+			"external_ui": "ui",
+			"secret": "",
+			"external_ui_download_url": "https://gh-proxy.com/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip",
+			"external_ui_download_detour": "direct",
+			"default_mode": "rule"
+		},
+		"cache_file": {
+			"enabled": true,
+			"store_fakeip": false
+		}
+	},
+	"dns": {
+		"servers": [
+			{
+				"tag": "proxyDns",
+				"type": "https",
+				"server": "1.1.1.1",
+				"detour": "Proxy"
+			},
+			{
+				"tag": "localDns",
+				"type": "udp",
+				"server": "223.5.5.5"
+			}
+		],
+		"rules": [
+			{
+				"clash_mode": "direct",
+				"server": "localDns"
+			},
+			{
+				"clash_mode": "global",
+				"server": "proxyDns"
+			},
+			{
+				"rule_set": "geosite-cn",
+				"server": "localDns"
+			},
+			{
+				"type": "logical",
+				"mode": "and",
+				"rules": [
+					{
+						"rule_set": "geosite-geolocation-!cn",
+						"invert": true
+					},
+					{
+						"rule_set": "geoip-cn"
+					}
+				],
+				"server": "proxyDns",
+				"client_subnet": "114.114.114.114/24"
+			}
+		],
+		"final": "proxyDns",
+		"strategy": "ipv4_only"
+	},
+	"inbounds": [
+		{
+			"tag": "tun-in",
+			"type": "tun",
+			"address": ["172.19.0.0/30"],
+			"mtu": 9000,
+			"auto_route": true,
+			"strict_route": true,
+			"stack": "system",
+			"platform": {
+				"http_proxy": {
+					"enabled": true,
+					"server": "127.0.0.1",
+					"server_port": 2080
+				}
+			}
+		},
+		{
+			"tag": "mixed-in",
+			"type": "mixed",
+			"listen": "127.0.0.1",
+			"listen_port": 2080
+		}
+	],
+	"outbounds": [
+		{
+			"tag": "Proxy",
+			"type": "selector",
+			"outbounds": ["auto", "direct", "{all}"],
+			"filter": [
+				{
+					"action": "exclude",
+					"keywords": ["网站|地址|剩余|过期|时间|有效|官网|套餐"]
+				}
+			]
+		},
+		{
+			"tag": "Taiwan",
+			"type": "selector",
+			"outbounds": ["{all}"],
+			"filter": [
+				{
+					"action": "include",
+					"keywords": ["🇹🇼|TW|tw|台湾|臺灣|台|Taiwan"]
+				}
+			]
+		},
+		{
+			"tag": "Japan",
+			"type": "selector",
+			"outbounds": ["{all}"],
+			"filter": [
+				{
+					"action": "include",
+					"keywords": ["🇯🇵|JP|jp|日本|日|Japan"]
+				}
+			]
+		},
+		{
+			"tag": "auto",
+			"type": "urltest",
+			"outbounds": ["{all}"],
+			"filter": [
+				{
+					"action": "exclude",
+					"keywords": ["网站|地址|剩余|过期|时间|有效|官网|套餐"]
+				}
+			],
+			"url": "http://www.gstatic.com/generate_204",
+			"interval": "10m",
+			"tolerance": 50
+		},
+		{
+			"type": "direct",
+			"tag": "direct"
+		}
+	],
+	"route": {
+		"default_domain_resolver": {
+			"server": "localDns"
+		},
+		"auto_detect_interface": true,
+		"final": "Proxy",
+		"rules": [
+			{
+				"inbound": ["tun-in", "mixed-in"],
+				"action": "sniff"
+			},
+			{
+				"type": "logical",
+				"mode": "or",
+				"rules": [
+					{
+						"port": 53
+					},
+					{
+						"protocol": "dns"
+					}
+				],
+				"action": "hijack-dns"
+			},
+			{
+				"rule_set": "geosite-category-ads-all",
+				"clash_mode": "rule",
+				"action": "reject"
+			},
+			{
+				"rule_set": "geosite-category-ads-all",
+				"clash_mode": "global",
+				"outbound": "Proxy"
+			},
+			{
+				"type": "logical",
+				"mode": "or",
+				"rules": [
+					{
+						"domain": ["steamserver.net"]
+					},
+					{
+						"rule_set": "geosite-steam@cn"
+					}
+				],
+				"outbound": "direct"
+			},
+			{
+				"rule_set": "geosite-dmm",
+				"outbound": "Japan"
+			},
+			{
+				"rule_set": "geosite-bahamut",
+				"outbound": "Taiwan"
+			},
+			{
+				"clash_mode": "direct",
+				"outbound": "direct"
+			},
+			{
+				"clash_mode": "global",
+				"outbound": "Proxy"
+			},
+			{
+				"domain": ["clash.razord.top", "yacd.metacubex.one", "yacd.haishan.me", "d.metacubex.one"],
+				"outbound": "direct"
+			},
+			{
+				"ip_is_private": true,
+				"outbound": "direct"
+			},
+			{
+				"type": "logical",
+				"mode": "or",
+				"rules": [
+					{
+						"port": 853
+					},
+					{
+						"network": "udp",
+						"port": 443
+					},
+					{
+						"protocol": "stun"
+					}
+				],
+				"action": "reject"
+			},
+			{
+				"rule_set": ["geoip-cn", "geosite-cn"],
+				"outbound": "direct"
+			}
+		],
+		"rule_set": [
+			{
+				"tag": "geosite-category-ads-all",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/category-ads-all.srs",
+				"download_detour": "direct"
+			},
+			{
+				"tag": "geosite-geolocation-!cn",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/geolocation-!cn.srs",
+				"download_detour": "direct"
+			},
+			{
+				"tag": "geoip-cn",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
+				"download_detour": "direct"
+			},
+			{
+				"tag": "geosite-cn",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs",
+				"download_detour": "direct"
+			},
+			{
+				"tag": "geosite-steam@cn",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/steam@cn.srs",
+				"download_detour": "direct"
+			},
+			{
+				"tag": "geosite-dmm",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/dmm.srs",
+				"download_detour": "direct"
+			},
+			{
+				"tag": "geosite-bahamut",
+				"type": "remote",
+				"format": "binary",
+				"url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/bahamut.srs",
+				"download_detour": "direct"
+			}
+		]
+	}
+}

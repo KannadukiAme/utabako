@@ -1,0 +1,16 @@
+{
+	"name": "utabako",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2025-10-25",
+	"compatibility_flags": ["nodejs_compat_v2"],
+	"assets": {
+		"directory": ".svelte-kit/cloudflare",
+		"binding": "ASSETS" // Exclude this if you don't have a `main` key configured.
+	},
+	"routes": [
+		{
+			"pattern": "utabako.madoka.xx.kg",
+			"custom_domain": true
+		}
+	]
+}
