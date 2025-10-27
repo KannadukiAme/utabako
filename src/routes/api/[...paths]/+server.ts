@@ -6,33 +6,15 @@ import { proxy } from 'hono/proxy'
 import packageJson from '../../../../package.json'
 import { templates } from '$lib/templates/templates'
 
-import { readdir, readFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 
 const app = new Hono().basePath('/api')
 
 app.use(compress())
 app.use(logger())
 
-app.get('/version', (c) => {
+app.get('/v', (c) => {
 	return c.json({ version: packageJson.version })
-})
-
-// 代理远程sing-box配置
-app.get('/proxy', async (c) => {
-	const url = c.req.query('url')
-	const userAgent = c.req.query('userAgent')
-	if (url == null) {
-		return c.text('url 参数缺失', 400)
-	}
-	return proxy(url, {
-		headers: {
-			...c.req.header(),
-			'X-Forwarded-For': '127.0.0.1',
-			'X-Forwarded-Host': c.req.header('host'),
-			'User-Agent': userAgent,
-			Authorization: undefined
-		}
-	})
 })
 
 /**
@@ -42,25 +24,27 @@ app.get('/proxy', async (c) => {
  * 参数 ua userAgent 可选，默认 sing-box ，用于伪装请求头
  */
 app.get('/config', async (c) => {
+	c.res.headers.set('Content-Type', 'application/json; charset=utf-8')
+
 	const url = c.req.query('url')
 	const template = c.req.query('t')
 	const userAgent = c.req.query('ua') || 'sing-box'
 
 	if (url === undefined || url === '') {
 		console.error('url 参数缺失')
-		return c.text('url 参数缺失', 400)
+		return c.json({ msg: 'url 参数缺失' })
 	}
 	if (URL.canParse(url) === false) {
 		console.error('url 参数非法')
-		return c.text('url 参数非法', 400)
+		return c.json({ msg: 'url 参数非法' })
 	}
 	if (template === undefined || template === '') {
 		console.error('t 参数缺失')
-		return c.text('t 参数缺失', 400)
+		return c.json({ msg: 't 参数缺失' })
 	}
 	if (URL.canParse(template) === false && isNaN(Number(template))) {
 		console.error('t 参数非法')
-		return c.text('t 参数非法', 400)
+		return c.json({ msg: 't 参数非法' })
 	}
 
 	// 代理订阅请求
@@ -78,12 +62,12 @@ app.get('/config', async (c) => {
 		singBoxConfig = await proxyRes.json()
 	} catch (e) {
 		console.error('url 参数错误', e)
-		return c.text('url 参数错误', 400)
+		return c.json({ msg: 'url 参数错误' })
 	}
 
 	if (singBoxConfig === null) {
 		console.error('代理订阅请求失败')
-		return c.text('代理订阅请求失败', 500)
+		return c.json({ msg: '代理订阅请求失败' })
 	}
 
 	// 获取模板配置
@@ -97,7 +81,7 @@ app.get('/config', async (c) => {
 			singBoxTemplateConfig = await templateRes.json()
 		} catch (e) {
 			console.error('t 参数错误', e)
-			return c.text('t 参数错误', 400)
+			return c.json({ msg: 't 参数错误' })
 		}
 	} else {
 		let templateIndex = Number(template)
@@ -111,7 +95,7 @@ app.get('/config', async (c) => {
 
 	if (singBoxTemplateConfig === null) {
 		console.error('获取模板配置失败')
-		return c.text('获取模板配置失败', 500)
+		return c.json({ msg: '获取模板配置失败' })
 	}
 
 	// 转换配置
