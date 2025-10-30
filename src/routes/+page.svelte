@@ -6,6 +6,7 @@
 
 	let { data }: PageProps = $props()
 	let isCustomedTemplate = $state(false)
+	let isFormattedJson = $state(false)
 	let url: string = $state('')
 	let templateUrl: string = $state('')
 	const subTypeOptions = [
@@ -22,7 +23,7 @@
 	let convertApiUrl = $derived(
 		`${page.url.origin}/api/config?t=${
 			isCustomedTemplate ? encodeURIComponent(templateUrl) : templateOptions[selectedTemplate].value
-		}&ua=${subTypeOptions[selectedSubType].userAgent}&url=${encodeURIComponent(url)}`
+		}&ua=${subTypeOptions[selectedSubType].userAgent}&url=${encodeURIComponent(url)}${isFormattedJson ? '&pretty' : ''}`
 	)
 
 	function handlePreview() {
@@ -73,6 +74,18 @@
 			{:else if isCustomedTemplate === true}
 				<input class="input" type="text" placeholder="https://" bind:value={templateUrl} />
 			{/if}
+		</label>
+		<label class="label">
+			<span class="label-text">输出设置</span>
+			<div>
+				<Switch checked={isFormattedJson} onCheckedChange={(e) => (isFormattedJson = e.checked)}>
+					<Switch.Label>格式化JSON</Switch.Label>
+					<Switch.Control>
+						<Switch.Thumb />
+					</Switch.Control>
+					<Switch.HiddenInput />
+				</Switch>
+			</div>
 		</label>
 		<div class="flex space-x-2 justify-end">
 			<button

@@ -2,6 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { proxy } from 'hono/proxy'
+import { prettyJSON } from 'hono/pretty-json'
 import packageJson from '../../../../package.json'
 import { templates } from '$lib/templates/templates'
 
@@ -10,6 +11,7 @@ import { readFile } from 'node:fs/promises'
 const app = new Hono().basePath('/api')
 
 app.use(logger())
+app.use(prettyJSON())
 
 app.get('/v', (c) => {
 	return c.json({ version: packageJson.version })
