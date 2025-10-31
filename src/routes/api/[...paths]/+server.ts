@@ -6,8 +6,6 @@ import { prettyJSON } from 'hono/pretty-json'
 import packageJson from '../../../../package.json'
 import { templates } from '$lib/templates/templates'
 
-import { readFile } from 'node:fs/promises'
-
 const app = new Hono().basePath('/api')
 
 app.use(logger())
@@ -73,24 +71,22 @@ app.get('/config', async (c) => {
 	// 获取模板配置
 	let singBoxTemplateConfig = null as Object | null
 
+	let templateURL = null as string | null
 	if (URL.canParse(template)) {
-		let templateURL = template
+		templateURL = template
 		console.log('使用自定义模板地址', templateURL)
-		try {
-			const templateRes = await proxy(templateURL)
-			singBoxTemplateConfig = await templateRes.json()
-		} catch (e) {
-			console.error('t 参数错误', e)
-			return c.json({ msg: 't 参数错误' })
-		}
 	} else {
 		let templateIndex = Number(template)
-		console.log('使用模板索引', templateIndex)
-		singBoxTemplateConfig = JSON.parse(
-			await readFile(`src/lib/templates/${templates[templateIndex].name}`, {
-				encoding: 'utf-8'
-			})
-		)
+		templateURL = templates[templateIndex].url
+		console.log('使用模板索引', templateIndex, templateURL)
+	}
+
+	try {
+		const res = await proxy(templateURL)
+		singBoxTemplateConfig = await res.json()
+	} catch (e) {
+		console.error('t 参数错误', e)
+		return c.json({ msg: 't 参数错误' })
 	}
 
 	if (singBoxTemplateConfig === null) {

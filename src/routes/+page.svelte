@@ -15,7 +15,7 @@
 		// { label: 'Clash订阅(yaml格式)', value: 2, userAgent: 'clash' }
 	]
 	const templateOptions = data.templates.map((template, index) => {
-		return { label: template.des, value: index }
+		return { label: template.name, value: index }
 	})
 	let selectedSubType = $state(subTypeOptions[0].value)
 	let selectedTemplate = $state(templateOptions[0].value)
