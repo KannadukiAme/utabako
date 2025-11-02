@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.png'
 	import { AppBar } from '@skeletonlabs/skeleton-svelte'
 	import DarkMode from '$lib/components/DarkMode.svelte'
+	import { GithubIcon } from '@lucide/svelte'
 
 	let { children } = $props()
 </script>
@@ -17,6 +18,15 @@
 		</AppBar.Headline>
 		<AppBar.Trail>
 			<DarkMode />
+			<a
+				type="button"
+				class="btn-icon hover:preset-tonal"
+				title="GitHub"
+				href="https://github.com/KannadukiAme/utabako"
+				target="_blank"
+			>
+				<GithubIcon class="size-6" />
+			</a>
 		</AppBar.Trail>
 	</AppBar.Toolbar>
 </AppBar>
